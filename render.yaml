@@ -1,0 +1,12 @@
+# Optional: Render "Blueprint". DEPLOY.md explains the manual setup, which does the same thing.
+services:
+  - type: web
+    name: promptguard-demo
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn "app:create_app()" --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT
+    healthCheckPath: /
+    envVars:
+      - key: PROMPTGUARD_DEMO
+        value: "1"

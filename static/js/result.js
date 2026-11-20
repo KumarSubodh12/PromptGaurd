@@ -366,7 +366,7 @@
       renderLegend(); renderDoc(); renderList(); renderDetail();
     });
     $("#delete").addEventListener("click", async () => {
-      if (!(await confirmDialog("Delete this scan?", "The stored text and report for this scan will be removed from this computer. This cannot be undone.", "Delete scan"))) return;
+      if (!(await confirmDialog("Delete this scan?", "The stored text and report for this scan will be deleted. This cannot be undone.", "Delete scan"))) return;
       try { await api(`/api/scans/${sid}`, { method: "DELETE" }); location.href = "/history"; } catch (e) { toast(e.message, "error"); }
     });
     // open the strongest finding so the explanation panel is never empty on arrival

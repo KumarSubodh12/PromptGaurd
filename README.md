@@ -82,6 +82,10 @@ Everything is in `models/evaluation.json` and on the Research Evaluation page, i
 * Evasion of prompt-injection detectors is studied in, for example, arXiv 2504.11168 and arXiv 2602.00750, which overlaps with the fuzzer.
 * I did not do a full literature review. Please check these references yourself before citing them, and before calling any part of this a contribution. A safer wording for a report is "candidate contributions, evaluated on synthetic data".
 
+## Public demo (optional)
+
+`DEPLOY.md` explains how to put a *demo* online (for example on Render). Demo mode (`PROMPTGUARD_DEMO=1`) is deliberately more limited than the local app: no history, overview, analytics or settings pages, scans deleted after an hour, rate limits and smaller uploads. Visitors' text does reach the server, and the demo says so. Do not run the normal version on a public server: it has no login.
+
 ## Using real data
 
 Put your own labelled examples in a CSV with the columns of `data/dataset.csv` (`id`, `text`, `label` 0/1, `kind`, `group`, `split`, `lang`, and `evidence`, the attack sentence for malicious rows, which the sentence-level model and the fuzzer use) and run `python scripts/train_and_evaluate.py`. Keep documents from the same source in the same `group` so they stay in one split. Public prompt-injection datasets can be used the same way; check their licences first.

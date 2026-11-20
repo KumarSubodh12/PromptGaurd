@@ -1,0 +1,13 @@
+{% extends "app_base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Not available in the public demo</h1>
+    <p>Scan history, statistics and settings are switched off here so that visitors cannot see each other's scans.</p>
+  </div>
+</div>
+<section class="panel">
+  <p class="muted">Run PromptGuard on your own computer to use the dashboard, history and settings. In this demo you can scan content and read the research evaluation.</p>
+  <div class="row mt"><a class="btn btn-primary" href="{{ url_for('new_scan') }}">New scan</a><a class="btn btn-ghost" href="{{ url_for('research') }}">Research evaluation</a></div>
+</section>
+{% endblock %}

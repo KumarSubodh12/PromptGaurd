@@ -56,8 +56,13 @@
     </section>
     <section class="panel">
       <div class="panel-head"><h2>Privacy</h2></div>
+      {% if public_demo %}
+      <p class="muted">This is a public demo. Your text is sent to this server, analysed here, and deleted automatically after about an hour. It is not sent to any other service or paid API.</p>
+      <p class="muted mt">Please do not paste private or confidential content. To keep your text on your own computer, run PromptGuard locally (see the README).</p>
+      {% else %}
       <p class="muted">The analysis runs inside this application on your computer. Your text is not sent to any outside service or paid API.</p>
       <p class="muted mt">The scan is saved in a local database so you can reopen it. You can turn off storing the text, or delete scans, in <a href="/settings">Settings</a> and <a href="/history">Scan History</a>.</p>
+      {% endif %}
     </section>
     <section class="panel">
       <div class="panel-head"><h2>Why ask about the AI?</h2></div>

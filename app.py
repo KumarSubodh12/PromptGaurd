@@ -5,19 +5,35 @@
 
 The server binds to 127.0.0.1 by default. All analysis runs in this process:
 no text is sent to any external service.
+
+Set PROMPTGUARD_DEMO=1 to run as a public demo (see DEPLOY.md): history, statistics and settings are switched
+off, scans are deleted after an hour, requests are rate-limited and uploads are smaller.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
+import threading
+import time
+from collections import defaultdict, deque
 from pathlib import Path
 
 from flask import Flask, Response, abort, jsonify, render_template, request
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
+
+# Render sets RENDER=true. Treating it as demo mode means a forgotten setting can never expose scan history publicly.
+DEMO_ENV = os.environ.get("PROMPTGUARD_DEMO", "").strip().lower() in ("1", "true", "yes") or bool(os.environ.get("RENDER"))
+DEMO_UPLOAD_BYTES = 2 * 1024 * 1024
+DEMO_MAX_CHARS = 100_000
+DEMO_TTL_MINUTES = 60
+# (requests allowed, per this many seconds) for each visitor address
+DEMO_LIMITS = {"scan": (20, 600), "fuzz": (10, 600), "other": (60, 600)}
 
 from promptguard import blast, fuzzer, sanitize as sanitizer          # noqa: E402
 from promptguard.config import (CATEGORIES, MAX_TEXT_CHARS, MAX_UPLOAD_BYTES, METHODS, MODEL_DIR, RISK_BANDS)  # noqa: E402
@@ -71,12 +87,20 @@ def samples() -> list[dict]:
     ]
 
 
-def create_app(db_path: str | Path | None = None, models: Models | None = None) -> Flask:
+def create_app(db_path: str | Path | None = None, models: Models | None = None, demo: bool | None = None) -> Flask:
     app = Flask(__name__, template_folder=str(ROOT / "templates"), static_folder=str(ROOT / "static"))
-    app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_BYTES + 256 * 1024
+    demo = DEMO_ENV if demo is None else demo
+    max_upload = DEMO_UPLOAD_BYTES if demo else MAX_UPLOAD_BYTES
+    max_chars = DEMO_MAX_CHARS if demo else MAX_TEXT_CHARS
+    app.config["MAX_CONTENT_LENGTH"] = max_upload + 256 * 1024
     app.config["JSON_SORT_KEYS"] = False
+    app.config["DEMO_LIMITS"] = dict(DEMO_LIMITS)
+    if demo:
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)      # the host's proxy sets the real client address
 
     db = Database(db_path) if db_path else Database()
+    if demo:
+        db.purge_older_than(DEMO_TTL_MINUTES)
     models = models if models is not None else Models.load(MODEL_DIR / "promptguard.joblib")
     analyzer = Analyzer(models)
     app.extensions["promptguard"] = {"db": db, "analyzer": analyzer}
@@ -101,7 +125,45 @@ def create_app(db_path: str | Path | None = None, models: Models | None = None) 
 
     @app.errorhandler(413)
     def too_large(_):
-        return jsonify(error=f"The upload is larger than {MAX_UPLOAD_BYTES // (1024 * 1024)} MB."), 413
+        return jsonify(error=f"The upload is larger than {max_upload // (1024 * 1024)} MB."), 413
+
+    @app.errorhandler(403)
+    def forbidden(_):
+        if request.path.startswith("/api/"):
+            return jsonify(error="This is not available in the public demo."), 403
+        return render_template("demo_off.html", active="", title="Not available", version=VERSION), 403
+
+    @app.context_processor
+    def inject_mode():
+        return {"public_demo": demo}
+
+    # ------------------------------------------------------------------ public demo protections
+    hits: dict[tuple[str, str], deque] = defaultdict(deque)
+    hits_lock = threading.Lock()
+
+    def limited(bucket: str):
+        """In demo mode, return a 429 response when this visitor is sending too many requests, else None."""
+        if not demo:
+            return None
+        limit, window = app.config["DEMO_LIMITS"][bucket]
+        now = time.monotonic()
+        key = (request.remote_addr or "unknown", bucket)
+        with hits_lock:
+            q = hits[key]
+            while q and now - q[0] > window:
+                q.popleft()
+            if len(q) >= limit:
+                wait = int(window - (now - q[0])) + 1
+                return jsonify(error=f"Too many requests for the public demo. Please try again in {wait} seconds."), 429
+            q.append(now)
+            if len(hits) > 5000:                                   # keep memory bounded
+                for k in [k for k, v in hits.items() if not v or now - v[-1] > window]:
+                    hits.pop(k, None)
+        return None
+
+    def demo_off():
+        if demo:
+            abort(403)
 
     @app.errorhandler(404)
     def not_found(_):
@@ -146,6 +208,7 @@ def create_app(db_path: str | Path | None = None, models: Models | None = None) 
 
     @app.get("/dashboard")
     def dashboard():
+        demo_off()
         return page("dashboard.html", "overview", "Overview")
 
     @app.get("/scan")
@@ -160,10 +223,12 @@ def create_app(db_path: str | Path | None = None, models: Models | None = None) 
 
     @app.get("/history")
     def history():
+        demo_off()
         return page("history.html", "history", "Scan history")
 
     @app.get("/analytics")
     def analytics():
+        demo_off()
         return page("analytics.html", "analytics", "Detection analytics")
 
     @app.get("/research")
@@ -172,6 +237,7 @@ def create_app(db_path: str | Path | None = None, models: Models | None = None) 
 
     @app.get("/settings")
     def settings_page():
+        demo_off()
         return page("settings.html", "settings", "Settings")
 
     # ------------------------------------------------------------------ API
@@ -187,8 +253,8 @@ def create_app(db_path: str | Path | None = None, models: Models | None = None) 
             capabilities=blast.CAPABILITIES,
             intents={k: v["label"] for k, v in blast.INTENTS.items()},
             method_labels=METHODS,
-            limits={"max_upload_mb": MAX_UPLOAD_BYTES // (1024 * 1024), "max_chars": MAX_TEXT_CHARS},
-            settings=db.get_settings(),
+            limits={"max_upload_mb": max_upload // (1024 * 1024), "max_chars": max_chars},
+            settings=db.get_settings(), demo=demo,
         )
 
     @app.get("/api/samples")
@@ -197,6 +263,9 @@ def create_app(db_path: str | Path | None = None, models: Models | None = None) 
 
     @app.post("/api/scan")
     def run_scan():
+        blocked = limited("scan")
+        if blocked:
+            return blocked
         data = request.get_json(silent=True) if request.is_json else None
         src = data if isinstance(data, dict) else request.form      # JSON body or multipart form
         profile = src.get("profile")
@@ -210,11 +279,16 @@ def create_app(db_path: str | Path | None = None, models: Models | None = None) 
         notes: list[str] = []
         upload = request.files.get("file")
         if upload and upload.filename:
-            ex = extract(upload.filename, upload.read(MAX_UPLOAD_BYTES + 1))
+            raw = upload.read(max_upload + 1)
+            if len(raw) > max_upload:
+                return jsonify(error=f"The upload is larger than {max_upload // (1024 * 1024)} MB."), 413
+            ex = extract(upload.filename, raw)
             text, name, kind, source = ex["text"], ex["name"], ex["kind"], "upload"
             hidden, notes = ex["hidden_spans"], ex["notes"]
         else:
             text = validate_pasted(src.get("text") or "")
+            if len(text) > max_chars:
+                raise ExtractError(f"The text is longer than {max_chars:,} characters. Split it into parts.")
             name = safe_name(src.get("name")) if src.get("name") else "Pasted text"
             kind, source = "text", "paste"
         text = text.lstrip("\ufeff")
@@ -222,10 +296,13 @@ def create_app(db_path: str | Path | None = None, models: Models | None = None) 
         result = analyzer.analyze(text, profile, custom_caps, name, hidden)
         result["input_notes"] = notes
         sid = db.save_scan(result, text, source=source, kind=kind, profile=profile, custom_caps=custom_caps)
+        if demo:
+            db.purge_older_than(DEMO_TTL_MINUTES)             # nothing a visitor pastes is kept for long
         return jsonify(id=sid, result=result), 201
 
     @app.get("/api/scans")
     def list_scans():
+        demo_off()
         limit = max(1, min(int(request.args.get("limit", 200)), 1000))
         return jsonify(db.list_scans(request.args.get("q", "").strip()[:80], limit, max(0, int(request.args.get("offset", 0)))))
 
@@ -252,10 +329,14 @@ def create_app(db_path: str | Path | None = None, models: Models | None = None) 
 
     @app.delete("/api/scans")
     def delete_all():
+        demo_off()
         return jsonify(deleted=db.delete_all())
 
     @app.post("/api/scans/<sid>/sanitize")
     def sanitize_scan(sid: str):
+        blocked = limited("other")
+        if blocked:
+            return blocked
         s = _scan_or_404(sid)
         if not s["text_stored"]:
             return jsonify(error="The original text was not stored for this scan, so a sanitised copy cannot be built."), 409
@@ -280,6 +361,9 @@ def create_app(db_path: str | Path | None = None, models: Models | None = None) 
 
     @app.get("/api/scans/<sid>/report.pdf")
     def report_pdf(sid: str):
+        blocked = limited("other")
+        if blocked:
+            return blocked
         s = _scan_or_404(sid)
         pdf = build_pdf(s)
         return Response(pdf, mimetype="application/pdf",
@@ -287,6 +371,9 @@ def create_app(db_path: str | Path | None = None, models: Models | None = None) 
 
     @app.post("/api/scans/<sid>/fuzz")
     def fuzz_scan(sid: str):
+        blocked = limited("fuzz")
+        if blocked:
+            return blocked
         s = _scan_or_404(sid)
         body = request.get_json(silent=True) or {}
         findings = [f for f in s["result"]["findings"] if not f["discounted"]]
@@ -304,6 +391,9 @@ def create_app(db_path: str | Path | None = None, models: Models | None = None) 
         """What if the agent had different capabilities? Re-scores stored findings; nothing is re-analysed."""
         from types import SimpleNamespace
         from promptguard.config import risk_band
+        blocked = limited("other")
+        if blocked:
+            return blocked
         s = _scan_or_404(sid)
         body = request.get_json(silent=True) or {}
         profile = body.get("profile") if body.get("profile") in blast.PROFILES else "custom"
@@ -317,6 +407,7 @@ def create_app(db_path: str | Path | None = None, models: Models | None = None) 
 
     @app.get("/api/stats")
     def stats():
+        demo_off()
         return jsonify(db.stats())
 
     @app.get("/api/evaluation")
@@ -329,6 +420,7 @@ def create_app(db_path: str | Path | None = None, models: Models | None = None) 
     @app.route("/api/settings", methods=["GET", "POST"])
     def settings():
         if request.method == "POST":
+            demo_off()
             body = request.get_json(silent=True) or {}
             clean = {}
             if "store_text" in body:

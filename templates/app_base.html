@@ -6,15 +6,16 @@
     <a class="brand" href="{{ url_for('landing') }}">{{ logo() }}<span>PromptGuard</span></a>
     <nav class="nav" aria-label="Main">
       {% for key, href, label in [('overview', url_for('dashboard'), 'Overview'), ('scan', url_for('new_scan'), 'New Scan'), ('history', url_for('history'), 'Scan History'), ('analytics', url_for('analytics'), 'Detection Analytics'), ('research', url_for('research'), 'Research Evaluation'), ('settings', url_for('settings_page'), 'Settings')] %}
-      <a href="{{ href }}"{% if active == key %} aria-current="page"{% endif %}>{{ icon(key) }}<span>{{ label }}</span></a>
+      {% if not public_demo or key in ('scan', 'research') %}<a href="{{ href }}"{% if active == key %} aria-current="page"{% endif %}>{{ icon(key) }}<span>{{ label }}</span></a>{% endif %}
       {% endfor %}
     </nav>
     <div class="sidebar-foot">
-      <p>Everything is analysed on this computer. No text leaves it.</p>
+      {% if public_demo %}<p>Public demo. Text is analysed on this server and deleted after about an hour.</p>{% else %}<p>Everything is analysed on this computer. No text leaves it.</p>{% endif %}
       <p>Version {{ version }}</p>
     </div>
   </aside>
   <main class="main" id="main">
+    {% if public_demo %}<div class="notice warn" role="note"><b>Public demo.</b> The text you paste or upload is sent to this server, analysed, and deleted automatically after about an hour. It is not sent to any other service. Do not use private or confidential content. To keep text on your own computer, run PromptGuard locally.</div>{% endif %}
     {% block content %}{% endblock %}
   </main>
 </div>

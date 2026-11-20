@@ -9,7 +9,7 @@
       <a href="#how">How It Works</a>
       <a href="{{ url_for('research') }}">Research</a>
       <a href="#about">About</a>
-      <a class="btn btn-primary btn-sm" href="{{ url_for('dashboard') }}">Dashboard</a>
+      {% if public_demo %}<a class="btn btn-primary btn-sm" href="{{ url_for('new_scan') }}">Try a scan</a>{% else %}<a class="btn btn-primary btn-sm" href="{{ url_for('dashboard') }}">Dashboard</a>{% endif %}
     </nav>
   </div>
 </header>
@@ -136,8 +136,8 @@
 
 <footer class="site-foot">
   <div class="wrap">
-    <p>PromptGuard reports indicators, not proof. It does not detect every prompt injection attack, and its published numbers come from a synthetic dataset. All analysis runs on this computer and no text is sent to an outside service.</p>
-    <p><a href="{{ url_for('research') }}">Research evaluation</a> &nbsp; <a href="{{ url_for('dashboard') }}">Dashboard</a></p>
+    <p>PromptGuard reports indicators, not proof. It does not detect every prompt injection attack, and its published numbers come from a synthetic dataset. {% if public_demo %}This is a public demo: text you submit is analysed on this server and deleted after about an hour, and it is not sent to any other service. Do not submit private content.{% else %}All analysis runs on this computer and no text is sent to an outside service.{% endif %}</p>
+    <p><a href="{{ url_for('research') }}">Research evaluation</a> &nbsp; {% if not public_demo %}<a href="{{ url_for('dashboard') }}">Dashboard</a>{% endif %}</p>
   </div>
 </footer>
 {% endblock %}

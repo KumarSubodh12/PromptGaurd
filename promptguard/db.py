@@ -97,6 +97,12 @@ class Database:
         with self.conn() as c:
             return c.execute("DELETE FROM scans WHERE id = ?", (sid,)).rowcount > 0
 
+    def purge_older_than(self, minutes: int) -> int:
+        """Delete scans older than ``minutes``. Used by the public demo so pasted text is not kept."""
+        cutoff = (datetime.now(timezone.utc) - timedelta(minutes=minutes)).isoformat(timespec="seconds")
+        with self.conn() as c:
+            return c.execute("DELETE FROM scans WHERE created_at < ?", (cutoff,)).rowcount
+
     def delete_all(self) -> int:
         with self.conn() as c:
             n = c.execute("SELECT COUNT(*) FROM scans").fetchone()[0]
