@@ -1,0 +1,51 @@
+{% extends "app_base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 id="title">Security analysis</h1>
+    <div class="meta-line" id="meta"></div>
+  </div>
+  <div class="row">
+    <a class="btn btn-primary" id="pdf" href="/api/scans/{{ sid }}/report.pdf">Export PDF report</a>
+    <a class="btn btn-secondary" href="{{ url_for('new_scan') }}">New scan</a>
+    <button class="btn btn-danger" type="button" id="delete">Delete scan</button>
+  </div>
+</div>
+
+<div id="notes" class="stack"></div>
+
+<div class="results-top mt">
+  <section class="panel" id="overall" aria-labelledby="overall-h"></section>
+  <section class="panel" id="summary" aria-labelledby="summary-h"></section>
+</div>
+
+<div class="workbench mt">
+  <section class="panel viewer-panel" aria-labelledby="viewer-h">
+    <div class="viewer-bar">
+      <h2 id="viewer-h" class="visually-hidden">Highlighted content</h2>
+      <div class="legend" id="legend"></div>
+      <label class="toggle-line hidden" id="disc-toggle"><input type="checkbox" id="show-disc"><span id="disc-label"></span></label>
+    </div>
+    <div class="doc" id="doc" tabindex="0" aria-label="Scanned content with suspicious passages highlighted"></div>
+  </section>
+  <aside class="panel evidence" aria-labelledby="evid-h">
+    <div class="panel-head"><h2 id="evid-h">Detection explanation</h2></div>
+    <div id="detail"></div>
+    <div>
+      <div class="panel-head"><h3>All findings</h3><span class="sub" id="flist-count"></span></div>
+      <div class="flist" id="flist"></div>
+    </div>
+  </aside>
+</div>
+
+<section class="panel mt" id="blast" aria-labelledby="blast-h"></section>
+
+<div class="grid cols-2 mt">
+  <section class="panel" id="breakdown" aria-labelledby="bd-h"></section>
+  <section class="panel" id="recs" aria-labelledby="recs-h"></section>
+</div>
+
+<section class="panel mt" id="sanitize" aria-labelledby="san-h"></section>
+<section class="panel mt" id="redteam" aria-labelledby="rt-h"></section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/result.js') }}"></script>{% endblock %}

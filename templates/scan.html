@@ -1,0 +1,69 @@
+{% extends "app_base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Analyse Your Content</h1>
+    <p>Paste a web page, email or document, or upload a file. PromptGuard looks for instructions hidden for an AI to follow.</p>
+  </div>
+</div>
+
+<div class="scan-layout">
+  <form class="panel" id="scan-form" novalidate>
+    <div class="row between">
+      <div class="tabs" role="tablist" aria-label="Input method">
+        <button type="button" role="tab" id="tab-paste" aria-selected="true" aria-controls="pane-paste">Paste text</button>
+        <button type="button" role="tab" id="tab-upload" aria-selected="false" aria-controls="pane-upload">Upload document</button>
+      </div>
+      <span class="counter" id="counter" aria-live="polite"></span>
+    </div>
+
+    <div class="field mt" id="pane-paste" role="tabpanel" aria-labelledby="tab-paste">
+      <label class="visually-hidden" for="text">Content to analyse</label>
+      <textarea class="input" id="text" placeholder="Paste the text of a web page, email or document here." spellcheck="false" autocomplete="off"></textarea>
+      <div class="field">
+        <span class="lab">Or try an example</span>
+        <div class="samples" id="samples"></div>
+      </div>
+    </div>
+
+    <div class="field mt hidden" id="pane-upload" role="tabpanel" aria-labelledby="tab-upload">
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose a file or drop it here">
+        <strong>Drop a file here, or choose one</strong>
+        <span class="muted" id="accepted">TXT, PDF, DOCX, HTML or EML</span>
+      </div>
+      <input class="file-input" type="file" id="file" accept=".txt,.md,.pdf,.docx,.html,.htm,.eml,.csv,.json" tabindex="-1">
+      <div class="fileinfo mt hidden" id="fileinfo"></div>
+    </div>
+
+    <div class="field mt">
+      <label for="profile">What can the AI do with this content?</label>
+      <select class="input" id="profile"></select>
+      <p class="hint" id="profile-hint"></p>
+      <div class="capgrid mt hidden" id="caps" role="group" aria-label="Agent capabilities"></div>
+    </div>
+
+    <div class="row mt-lg">
+      <button class="btn btn-primary btn-lg" type="submit" id="go">Analyse Content</button>
+      <button class="btn btn-ghost btn-lg" type="button" id="clear">Clear Input</button>
+    </div>
+    <div class="notice error mt hidden" id="error" role="alert"></div>
+  </form>
+
+  <aside class="stack">
+    <section class="panel hidden" id="progress" aria-live="polite">
+      <div class="panel-head"><h2>Analysing</h2></div>
+      <ol class="stages" id="stages"></ol>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Privacy</h2></div>
+      <p class="muted">The analysis runs inside this application on your computer. Your text is not sent to any outside service or paid API.</p>
+      <p class="muted mt">The scan is saved in a local database so you can reopen it. You can turn off storing the text, or delete scans, in <a href="/settings">Settings</a> and <a href="/history">Scan History</a>.</p>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Why ask about the AI?</h2></div>
+      <p class="muted">A hidden instruction only matters if the AI can act on it. An email assistant that can send mail is exposed to "forward this thread". A chat-only model is not. If you leave this on "Unknown", PromptGuard assumes the worst case.</p>
+    </section>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/scan.js') }}"></script>{% endblock %}

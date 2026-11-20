@@ -1,0 +1,43 @@
+{% extends "app_base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Research Evaluation</h1>
+    <p>How well do the detection methods work, where do they fail, and what did each idea add? Every figure on this page is read from the evaluation file written by <span class="mono">scripts/train_and_evaluate.py</span>.</p>
+  </div>
+</div>
+<div id="loading" class="muted">Loading the evaluation...</div>
+<div id="page" class="stack hidden">
+  <div class="notice warn" id="honesty"></div>
+
+  <section class="panel"><div class="panel-head"><h2>What the results say</h2><span class="sub">written from the numbers below</span></div><ul class="keyfinds" id="findings"></ul></section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Method comparison</h2>
+      <div class="tabs" role="tablist" aria-label="Evaluation set" id="set-tabs"></div></div>
+    <p class="dim" id="set-note"></p>
+    <div id="cmp-chart" class="mt"></div>
+    <div class="table-wrap mt" id="cmp-table"></div>
+  </section>
+
+  <div class="grid cols-2">
+    <section class="panel"><div class="panel-head"><h2>Detection and false alarms by kind of document</h2></div><div class="table-wrap" id="kinds"></div>
+      <p class="rule-note">Malicious kinds show the share detected (higher is better). Benign kinds show the share wrongly flagged (lower is better). Cutoff for flagged: probability 0.5.</p></section>
+    <section class="panel"><div class="panel-head"><h2>Do the risk bands mean anything?</h2></div><div id="bands"></div><div class="table-wrap mt" id="calib"></div></section>
+  </div>
+
+  <section class="panel"><div class="panel-head"><h2>What each added signal did</h2><span class="sub">ablation on the synthetic test set</span></div><div class="table-wrap" id="ablation"></div><p class="rule-note" id="ablation-note"></p></section>
+
+  <section class="panel"><div class="panel-head"><h2>Self-attack results</h2><span class="sub">share of disguised attacks that evaded each method</span></div><div class="table-wrap" id="fuzz"></div><div id="fuzz-note" class="mt"></div></section>
+
+  <div class="grid cols-2">
+    <section class="panel"><div class="panel-head"><h2>Misclassified examples</h2></div><div id="errors"></div></section>
+    <section class="panel"><div class="panel-head"><h2>What the models learned</h2></div><div id="interp"></div></section>
+  </div>
+
+  <section class="panel"><div class="panel-head"><h2>Dataset</h2></div><div id="dataset"></div></section>
+
+  <section class="panel"><div class="panel-head"><h2>Limitations and related work</h2></div><div id="limits"></div></section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/research.js') }}"></script>{% endblock %}

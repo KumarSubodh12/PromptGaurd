@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block body %}
+<main class="not-found">
+  <h1>Not found</h1>
+  <p class="muted">That page or scan does not exist. It may have been deleted.</p>
+  <div class="row mt">
+    <a class="btn btn-primary" href="{{ url_for('dashboard') }}">Go to the dashboard</a>
+    <a class="btn btn-ghost" href="{{ url_for('landing') }}">Home</a>
+  </div>
+</main>
+{% endblock %}

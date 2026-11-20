@@ -1,0 +1,32 @@
+{% extends "app_base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Settings</h1>
+    <p>Choices about what PromptGuard remembers and how it scores.</p>
+  </div>
+</div>
+<div class="grid cols-2">
+  <section class="panel stack">
+    <div class="panel-head"><h2>Storage and defaults</h2></div>
+    <label class="switch"><input type="checkbox" id="store"><span><b>Keep the scanned text</b><div class="dim">Needed for the highlighted viewer, the safe copy and the red-team test when you reopen a scan. Turn it off for sensitive documents. Scores and findings are still saved. This applies to new scans only.</div></span></label>
+    <div class="field"><label for="profile">Default agent profile</label><select class="input" id="profile"></select><p class="hint">Used when a scan does not choose one. "Unknown" assumes the worst case.</p></div>
+    <div class="row"><button class="btn btn-primary" type="button" id="save">Save settings</button></div>
+  </section>
+  <section class="panel stack">
+    <div class="panel-head"><h2>Risk bands</h2></div>
+    <div id="bands"></div>
+    <p class="rule-note">These cut-offs are design choices from the project brief, not scientifically established values. The research page shows how well each band separates malicious from benign test documents. To change them, edit RISK_BANDS in promptguard/config.py.</p>
+  </section>
+  <section class="panel stack">
+    <div class="panel-head"><h2>Detection models</h2></div>
+    <div id="models"></div>
+  </section>
+  <section class="panel stack">
+    <div class="panel-head"><h2>Your data</h2></div>
+    <p class="muted">All scans live in a SQLite file on this computer. PromptGuard never uploads text anywhere.</p>
+    <div class="row"><a class="btn btn-secondary" href="{{ url_for('history') }}">Open scan history</a><button class="btn btn-danger" type="button" id="wipe">Delete all scans</button></div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/settings.js') }}"></script>{% endblock %}

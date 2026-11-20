@@ -1,0 +1,19 @@
+{% extends "app_base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Detection Analytics</h1>
+    <p>Charts built from the scans stored on this computer. Nothing here is sample data.</p>
+  </div>
+</div>
+<div id="empty"></div>
+<div class="grid cols-2" id="charts">
+  <section class="panel"><div class="panel-head"><h2>Benign and suspicious content</h2><span class="sub">suspicious means a risk score of 30 or more</span></div><div id="bs"></div></section>
+  <section class="panel"><div class="panel-head"><h2>Distribution of finding categories</h2></div><div id="cats"></div></section>
+  <section class="panel"><div class="panel-head"><h2>Which method flagged your findings</h2></div><div id="methods"></div></section>
+  <section class="panel"><div class="panel-head"><h2>How accurate is each method?</h2><a href="{{ url_for('research') }}">Research evaluation</a></div><div id="acc"></div></section>
+  <section class="panel"><div class="panel-head"><h2>Average risk score per day</h2><span class="sub">last 30 days</span></div><div id="trend"></div></section>
+  <section class="panel"><div class="panel-head"><h2>Scans per day</h2><span class="sub">last 30 days</span></div><div id="volume"></div></section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>{% endblock %}

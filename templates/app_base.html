@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon, logo %}
+{% block body %}
+<div class="shell">
+  <aside class="sidebar">
+    <a class="brand" href="{{ url_for('landing') }}">{{ logo() }}<span>PromptGuard</span></a>
+    <nav class="nav" aria-label="Main">
+      {% for key, href, label in [('overview', url_for('dashboard'), 'Overview'), ('scan', url_for('new_scan'), 'New Scan'), ('history', url_for('history'), 'Scan History'), ('analytics', url_for('analytics'), 'Detection Analytics'), ('research', url_for('research'), 'Research Evaluation'), ('settings', url_for('settings_page'), 'Settings')] %}
+      <a href="{{ href }}"{% if active == key %} aria-current="page"{% endif %}>{{ icon(key) }}<span>{{ label }}</span></a>
+      {% endfor %}
+    </nav>
+    <div class="sidebar-foot">
+      <p>Everything is analysed on this computer. No text leaves it.</p>
+      <p>Version {{ version }}</p>
+    </div>
+  </aside>
+  <main class="main" id="main">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}

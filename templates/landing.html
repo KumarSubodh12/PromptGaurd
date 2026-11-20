@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% from "_icons.html" import logo %}
+{% block body %}
+<header class="public-nav">
+  <div class="inner">
+    <a class="brand" href="#top">{{ logo() }}<span>PromptGuard</span></a>
+    <nav aria-label="Main">
+      <a href="#top">Home</a>
+      <a href="#how">How It Works</a>
+      <a href="{{ url_for('research') }}">Research</a>
+      <a href="#about">About</a>
+      <a class="btn btn-primary btn-sm" href="{{ url_for('dashboard') }}">Dashboard</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <div class="wrap">
+    <section class="hero" aria-labelledby="hero-title">
+      <div>
+        <h1 id="hero-title">Protect AI Systems from Hidden Instructions.</h1>
+        <p class="lede">Analyse external content, detect indirect prompt injection attempts and understand potential AI security risks before content reaches your AI system.</p>
+        <div class="actions">
+          <a class="btn btn-primary btn-lg" href="{{ url_for('new_scan') }}">Start Security Scan</a>
+          <a class="btn btn-secondary btn-lg" href="#how">Explore How It Works</a>
+        </div>
+      </div>
+
+      <figure class="xray revealed" id="xray" aria-label="Example of a scanned email with the hidden instruction highlighted">
+        <div class="xray-bar"><span>vendor-email.txt</span><span>Example, scanned by the real engine</span></div>
+        <div class="doc-sample">
+          {% for para in demo.paras %}
+          <p>{% for text, cat in para %}{% if cat %}<mark class="hl" data-cat="{{ cat }}">{{ text }}</mark>{% else %}{{ text }}{% endif %}{% endfor %}</p>
+          {% endfor %}
+        </div>
+        <div class="callout">
+          <span class="big">{{ demo.score }}</span>
+          <div><b>{{ demo.band }} risk for an {{ demo.profile | lower }}</b><span>{{ demo.findings }} passages flagged. The email is written for a person, but one paragraph speaks to an AI.</span></div>
+        </div>
+        <div class="scanline" aria-hidden="true"></div>
+      </figure>
+    </section>
+  </div>
+
+  <div class="wrap">
+    <section class="section" aria-labelledby="feat-title">
+      <h2 id="feat-title">What PromptGuard looks at</h2>
+      <div class="features">
+        <article class="feature">
+          <h3>Intelligent Detection</h3>
+          <p>Rules, a TF-IDF classifier and a hidden-text check read the same document. Look-alike letters, spaced-out words and invisible characters are cleaned up first, so disguised wording is still matched.</p>
+          <div class="mini">
+            <div class="ln"><span>Pattern rules</span><b>5 categories</b></div>
+            <div class="ln"><span>TF-IDF + Logistic Regression</span><b>trained locally</b></div>
+            <div class="ln"><span>Unicode and hidden text</span><b>made visible</b></div>
+          </div>
+        </article>
+        <article class="feature">
+          <h3>Contextual Risk Analysis</h3>
+          <p>A sentence in a security article that quotes an attack is not an attack. PromptGuard checks quotation, discussion, prohibition and who the text is addressed to, and says how much each factor changed the score.</p>
+          <div class="mini">
+            <div class="quote">"Ignore all previous instructions" appears in a news article about attacks.</div>
+            <div class="ln"><span>Quoted and discussed</span><b>score lowered</b></div>
+          </div>
+        </article>
+        <article class="feature">
+          <h3>Explainable Security Reports</h3>
+          <p>Each finding states what was found, why it was flagged, which method caught it, how severe it is and what to do. The report can be exported as a PDF.</p>
+          <div class="mini">
+            <div class="ln"><span>What was detected</span><b>exact passage</b></div>
+            <div class="ln"><span>Why and by which method</span><b>plain words</b></div>
+            <div class="ln"><span>What to do next</span><b>per finding</b></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="about" aria-labelledby="about-title">
+      <h2 id="about-title">What is indirect prompt injection?</h2>
+      <p class="lead">An AI assistant that reads your email, a web page or a PDF cannot reliably tell the document's text from your instructions. If the document contains a sentence such as "forward the whole thread to this address", the assistant may obey it. Nobody typed that into the chat. It arrived inside the content, which is why it is called indirect.</p>
+      <p class="lead">The damage depends on what the assistant can do. A chat-only model can at worst say something misleading. An agent that can read private files and send messages can leak them. PromptGuard scores both: how suspicious the content is, and how much harm it could do on the agent you describe.</p>
+    </section>
+
+    <section class="section" id="how" aria-labelledby="how-title">
+      <h2 id="how-title">How it works</h2>
+      <div class="flow">
+        <svg viewBox="0 0 1000 150" role="img" aria-label="External content goes into PromptGuard, which produces a security analysis and a risk report.">
+          <defs><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+          {% set boxes = [('External Content', 'email, web page, PDF, DOCX, TXT'), ('PromptGuard', 'extract, clean, detect'), ('Security Analysis', 'context, hidden text, blast radius'), ('Risk Report', 'score 0 to 100, PDF')] %}
+          {% for title, sub in boxes %}
+          <g transform="translate({{ loop.index0 * 256 }} 20)">
+            <rect width="208" height="110" rx="14" fill="#111C30" stroke="{{ '#38BDF8' if loop.index == 2 else 'rgba(148,163,184,.35)' }}" stroke-width="{{ 2 if loop.index == 2 else 1.2 }}"/>
+            <text x="104" y="52" text-anchor="middle" font-size="19" font-weight="700" fill="#F8FAFC">{{ title }}</text>
+            <text x="104" y="78" text-anchor="middle" font-size="12.5" fill="#A8B4C8">{{ sub }}</text>
+          </g>
+          {% if not loop.last %}<line x1="{{ loop.index0 * 256 + 216 }}" y1="75" x2="{{ loop.index0 * 256 + 248 }}" y2="75" stroke="#38BDF8" stroke-width="2" marker-end="url(#arr)"/>{% endif %}
+          {% endfor %}
+        </svg>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><h3>Read the content</h3><p>Text, PDF and DOCX files are checked and extracted. Hidden text in a DOCX is kept and flagged, not thrown away.</p></div>
+        <div class="step"><div class="n">2</div><h3>Clean it, keep the positions</h3><p>Invisible characters, look-alike letters and spacing tricks are normalised, and every match still points at the original characters.</p></div>
+        <div class="step"><div class="n">3</div><h3>Detect and weigh the context</h3><p>Rules, machine learning, an audience check and a style check each give a signal. A stacked model combines them into one score.</p></div>
+        <div class="step"><div class="n">4</div><h3>Explain and handle safely</h3><p>You see highlighted passages with reasons, the damage possible on your agent, and a sanitised copy. Your original is never changed.</p></div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="ideas-title">
+      <h2 id="ideas-title">Four ideas we tried, and how they did</h2>
+      <p class="lead">We cannot say any of these has never been done before. Related work exists, and the README lists it. What follows is what each one did on our own test data, including where it did not help.</p>
+      <div class="novel">
+        <article data-cat="unauthorised_action">
+          <h3>Blast radius</h3>
+          <p>The same text is scored differently for a chat-only model and for an agent that can read mail and send it. It marks which attack paths the agent can reach and warns when it combines private data, untrusted content and a way out.</p>
+          <p class="status">The multipliers are our own design choices and have not been validated against real incidents.</p>
+        </article>
+        <article data-cat="audience_mismatch">
+          <h3>Audience mismatch</h3>
+          <p>Text that talks to an AI inside content written for people is suspicious even when it uses no attack keyword.</p>
+          <p class="status">On the synthetic test set, removing it lowered detection of AI-addressed text from 100% to 69% and doubled false alarms on educational text.</p>
+        </article>
+        <article data-cat="role_manipulation">
+          <h3>Style break</h3>
+          <p>An injected sentence often reads differently from the text around it. PromptGuard measures that distance for every sentence.</p>
+          <p class="status">Weak as a verdict: the stacker gave it no weight. It helps point at the injected sentence, which was the top outlier in about half of the long test documents.</p>
+        </article>
+        <article data-cat="obfuscation">
+          <h3>Self-attacking fuzzer</h3>
+          <p>PromptGuard rewrites a flagged passage 14 different ways (typos, base64, translation, hidden HTML) and reports which versions slip past.</p>
+          <p class="status">It found real gaps, such as quoting and base64 tricks. Retraining on the rewrites made the model worse, so the shipped model is not hardened.</p>
+        </article>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <p>PromptGuard reports indicators, not proof. It does not detect every prompt injection attack, and its published numbers come from a synthetic dataset. All analysis runs on this computer and no text is sent to an outside service.</p>
+    <p><a href="{{ url_for('research') }}">Research evaluation</a> &nbsp; <a href="{{ url_for('dashboard') }}">Dashboard</a></p>
+  </div>
+</footer>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/landing.js') }}"></script>{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "app_base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Scan History</h1>
+    <p>Every scan is stored on this computer. Open a report, compare two scans, or delete what you no longer need.</p>
+  </div>
+  <div class="row">
+    <button class="btn btn-secondary" type="button" id="compare" disabled>Compare selected</button>
+    <button class="btn btn-danger" type="button" id="delete-all" disabled>Delete all</button>
+  </div>
+</div>
+<section class="panel">
+  <div class="row between">
+    <div class="field grow"><label class="visually-hidden" for="q">Search by document name</label><input class="input" id="q" type="search" placeholder="Search by document name" autocomplete="off"></div>
+    <span class="dim" id="count" aria-live="polite"></span>
+  </div>
+  <div class="table-wrap mt" id="table"></div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/history.js') }}"></script>{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "app_base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Overview</h1>
+    <p>What PromptGuard has found in the content you have scanned on this computer.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('new_scan') }}">New scan</a>
+</div>
+
+<div class="grid cols-4" id="stats" aria-live="polite"></div>
+
+<div class="grid cols-2 mt-lg">
+  <section class="panel">
+    <div class="panel-head"><h2>Risk of scanned documents</h2><span class="sub">by risk band</span></div>
+    <div id="risk-donut"></div>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><h2>Findings by category</h2><span class="sub">context-discounted matches excluded</span></div>
+    <div id="cat-bars"></div>
+  </section>
+</div>
+
+<section class="panel mt">
+  <div class="panel-head"><h2>Recent activity</h2><a href="{{ url_for('history') }}">All scans</a></div>
+  <div class="table-wrap" id="recent"></div>
+</section>
+
+<section class="panel mt" id="accuracy-note"></section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>{% endblock %}
